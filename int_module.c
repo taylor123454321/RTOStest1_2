@@ -18,8 +18,8 @@
 #include "driverlib/interrupt.h"
 #include "driverlib/gpio.h"
 #include "init.h"
-#include "include/FreeRTOS.h"
 #include "driverlib/timer.h"
+#include "include/FreeRTOS.h"
 #include "include/semphr.h"
 
 xSemaphoreHandle  xBinarySemaphoreGPSchar;

@@ -37,6 +37,7 @@
 
 
 /* FreeRTOS includes. */
+
 #include "include/FreeRTOS.h"
 #include "include/task.h"
 #include "include/semphr.h"
@@ -124,8 +125,6 @@ int main( void ) {
 	xEncoder_raw_DATA = xQueueCreate( 1, sizeof(PWM_DATA_s));
 	xUART_GPS_DATA = xQueueCreate( 1, sizeof(UART_GPS_DATA_s));
 
-
-
 	/* Create tasks. */
 	xTaskCreate( vReadGPS, "GPS Read Task", 240, NULL, 4, NULL );
 	xTaskCreate( vDisplayTask, "Display Task", 600, NULL, 1, NULL );
@@ -145,29 +144,7 @@ int main( void ) {
 /*Tasks for Program */
 /*-----------------------------------------------------------*/
 
-char* store_char(long UART_character, char * UART_char_data_old_2){
-	UART_GPS_DATA_s UART_DATA;
 
-	xQueueReceive(xUART_GPS_DATA, &UART_DATA, 0);
-
-	if (UART_character == '$'){
-		UART_char_data_old_2[0] = '\0';
-		strcpy(UART_char_data_old_2, UART_DATA.UART_char_data);
-		UART_DATA.index = 0;
-		UART_DATA.UART_char_data[UART_DATA.index] = UART_character;
-		UART_DATA.index ++;
-
-		xQueueSendToBack(xUART_GPS_DATA, &UART_DATA, 0);
-		xSemaphoreGive(xBinarySemaphoreGPS);
-	}
-	else{
-		UART_DATA.UART_char_data[UART_DATA.index] = UART_character;
-		UART_DATA.index ++;
-
-		xQueueSendToBack(xUART_GPS_DATA, &UART_DATA, 0);
-	}
-	return UART_char_data_old_2;
-}
 
 /* Run to decode GPS NEMA sentence */
 void vReadGPSchar(void *pvParameters){

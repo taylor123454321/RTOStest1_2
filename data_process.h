@@ -12,7 +12,7 @@
 #include "init.h"
 #include "driverlib/timer.h"
 
-
+char* store_char(long UART_character, char * UART_char_data_old_2);
 
 //float calculate_distance(void);
 

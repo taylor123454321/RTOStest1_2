@@ -20,25 +20,48 @@
 #include "driverlib/timer.h"
 #include "driverlib/systick.h"
 #include "data_process.h"
+#include "include/FreeRTOS.h"
+
+#include "include/semphr.h"
 
 
 #define false 0
 #define true 1
 #define MAX_24BIT_VAL 0X0FFFFFF
-//GLOABAL VARIABLES
 
-//float buffed_speed = 0;
-float buffed_speed_1_old = 0;
-float acceleration = 0;
-float distance = 0;
 
-float time_array[5] = {1, 2, 3, 4, 5};
-float speed_array[5];
+xQueueHandle xUART_GPS_DATA;
+xSemaphoreHandle  xBinarySemaphoreGPS;
+
 
 int last_time = 0;		// Initialised value for the time of the previous debounce
 
 //FUNCTIONS
 
+
+char* store_char(long UART_character, char * UART_char_data_old_2){
+	UART_GPS_DATA_s UART_DATA;
+
+	xQueueReceive(xUART_GPS_DATA, &UART_DATA, 0);
+
+	if (UART_character == '$'){
+		UART_char_data_old_2[0] = '\0';
+		strcpy(UART_char_data_old_2, UART_DATA.UART_char_data);
+		UART_DATA.index = 0;
+		UART_DATA.UART_char_data[UART_DATA.index] = UART_character;
+		UART_DATA.index ++;
+
+		xQueueSendToBack(xUART_GPS_DATA, &UART_DATA, 0);
+		xSemaphoreGive(xBinarySemaphoreGPS);
+	}
+	else{
+		UART_DATA.UART_char_data[UART_DATA.index] = UART_character;
+		UART_DATA.index ++;
+
+		xQueueSendToBack(xUART_GPS_DATA, &UART_DATA, 0);
+	}
+	return UART_char_data_old_2;
+}
 
 /*float calculate_distance(void){
 	int current_time = SysTickValueGet();

@@ -18,6 +18,7 @@ int_module.obj: C:/ti/StellarisWare/driverlib/interrupt.h
 int_module.obj: C:/ti/StellarisWare/driverlib/gpio.h
 int_module.obj: C:/ti/StellarisWare/driverlib/pin_map.h
 int_module.obj: ../init.h
+int_module.obj: C:/ti/StellarisWare/driverlib/timer.h
 int_module.obj: ../include/FreeRTOS.h
 int_module.obj: C:/ti/ccsv6/tools/compiler/ti-cgt-arm_16.6.0.STS/include/stddef.h
 int_module.obj: ../include/projdefs.h
@@ -25,7 +26,6 @@ int_module.obj: ../include/../FreeRTOSConfig.h
 int_module.obj: ../include/portable.h
 int_module.obj: ../include/../portable/portmacro.h
 int_module.obj: ../include/mpu_wrappers.h
-int_module.obj: C:/ti/StellarisWare/driverlib/timer.h
 int_module.obj: ../include/semphr.h
 int_module.obj: ../include/queue.h
 
@@ -47,6 +47,7 @@ C:/ti/StellarisWare/driverlib/interrupt.h:
 C:/ti/StellarisWare/driverlib/gpio.h: 
 C:/ti/StellarisWare/driverlib/pin_map.h: 
 ../init.h: 
+C:/ti/StellarisWare/driverlib/timer.h: 
 ../include/FreeRTOS.h: 
 C:/ti/ccsv6/tools/compiler/ti-cgt-arm_16.6.0.STS/include/stddef.h: 
 ../include/projdefs.h: 
@@ -54,6 +55,5 @@ C:/ti/ccsv6/tools/compiler/ti-cgt-arm_16.6.0.STS/include/stddef.h:
 ../include/portable.h: 
 ../include/../portable/portmacro.h: 
 ../include/mpu_wrappers.h: 
-C:/ti/StellarisWare/driverlib/timer.h: 
 ../include/semphr.h: 
 ../include/queue.h: 
