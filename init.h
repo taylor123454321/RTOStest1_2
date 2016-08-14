@@ -160,10 +160,9 @@ typedef struct{
 
 typedef struct {
 	int index;
-	//char UART_char_data[90];
-	//char UART_char_data_old[90];
-
+	char UART_char_data[90];
 } UART_GPS_DATA_s;
+
 
 
 // *******************************************************

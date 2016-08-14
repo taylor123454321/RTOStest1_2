@@ -86,7 +86,7 @@ void vReadGPSchar( void *pvParameters );
 //void vCalculateAcceleration( void *pvParameters );
 
 //Global variables
-char UART_char_data[120];
+//char UART_char_data[120];
 char UART_char_data_old[120];
 int index = 0;
 acc_time_s acc_time;
@@ -174,16 +174,16 @@ void store_char(long UART_character){
 
 	if (UART_character == '$'){
 		UART_char_data_old[0] = '\0';
-		strcpy(UART_char_data_old, UART_char_data);
+		strcpy(UART_char_data_old, UART_DATA.UART_char_data);
 		UART_DATA.index = 0;
-		UART_char_data[UART_DATA.index] = UART_character;
+		UART_DATA.UART_char_data[UART_DATA.index] = UART_character;
 		UART_DATA.index ++;
 
 		xQueueSendToBack(xUART_GPS_DATA, &UART_DATA, 0);
 		xSemaphoreGive(xBinarySemaphoreGPS);
 	}
 	else{
-		UART_char_data[UART_DATA.index] = UART_character;
+		UART_DATA.UART_char_data[UART_DATA.index] = UART_character;
 		UART_DATA.index ++;
 
 		xQueueSendToBack(xUART_GPS_DATA, &UART_DATA, 0);
