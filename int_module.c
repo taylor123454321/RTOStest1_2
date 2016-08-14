@@ -22,10 +22,20 @@
 #include "driverlib/timer.h"
 #include "include/semphr.h"
 
-
+xSemaphoreHandle  xBinarySemaphoreGPSchar;
 xSemaphoreHandle  xBinarySemaphoreEncoder_1;
 xQueueHandle xEncoder_raw_DATA;
 
+
+void UARTIntHandler(void) {
+	portBASE_TYPE xHigherprioritytaskWoken = pdFALSE;
+	unsigned long ulStatus;
+	ulStatus = UARTIntStatus(UART0_BASE, true);	// Get the interrupt status.
+	UARTIntClear(UART0_BASE, ulStatus);	        // Clear the asserted interrupts.
+
+	xSemaphoreGiveFromISR(xBinarySemaphoreGPSchar, 0);
+    portEND_SWITCHING_ISR(xHigherprioritytaskWoken);
+}
 
 
 void EncoderINT (void){

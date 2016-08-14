@@ -132,15 +132,15 @@ void no_fix_screen(clock time, uint8_t satellite, int encoder, int aim_pos, PWM_
 	RIT128x96x4StringDraw (stringG, 6, 82, 15);
 }
 
-void accleration_screen(float speed, float acc, float max_acc, acc_time_s acc_times){
+void accleration_screen(float speed, float acc, float max_acc){
 	char stringA[30];char stringB[30];char stringC[30];char stringD[30];char stringE[30];char stringF[30];char stringG[30];
 	sprintf(stringA, "Speed %.1f    ", speed);
-	sprintf(stringB, "Acc %.1f Max %.1f   ", acc, max_acc);
-	sprintf(stringC, "0-20  %.1f      ", acc_times.acc20);
-	sprintf(stringD, "0-40  %.1f      ", acc_times.acc40);
-	sprintf(stringE, "0-60  %.1f      ", acc_times.acc60);
-	sprintf(stringF, "0-80  %.1f      ", acc_times.acc80);
-	sprintf(stringG, "0-100 %.1f      ", acc_times.acc100);
+	sprintf(stringB, "Acc ");//%.1f Max .1f   ", acc, max_acc);
+	sprintf(stringC, "0-20 ");// %.1f      ", acc_times.acc20);
+	sprintf(stringD, "0-40 ");// %.1f      ", acc_times.acc40);
+	sprintf(stringE, "0-60 ");// %.1f      ", acc_times.acc60);
+	sprintf(stringF, "0-80 ");// %.1f      ", acc_times.acc80);
+	sprintf(stringG, "0-100");// %.1f      ", acc_times.acc100);
 	RIT128x96x4StringDraw (stringA, 6, 12, 15);
 	RIT128x96x4StringDraw (stringB, 6, 24, 10);
 	RIT128x96x4StringDraw (stringC, 6, 34, 13);
@@ -152,12 +152,12 @@ void accleration_screen(float speed, float acc, float max_acc, acc_time_s acc_ti
 
 
 void display(int screen, float acc, float max_acc, int speed_set, GPS_DATA_DECODED_s DATA, float buffed_speed_,
-		unsigned long encoder, float distance, char * stuff, int aim_pos, unsigned long adc, acc_time_s acc_times, PWM_DATA_s PWM_DATA){
+		unsigned long encoder, float distance, char * stuff, int aim_pos, unsigned long adc, PWM_DATA_s PWM_DATA){
 	if (screen == 1){
 		set_speed_display(speed_set);
 	}
 	else if (screen == 2){
-		accleration_screen(DATA.speed_s, acc, max_acc, acc_times);
+		accleration_screen(DATA.speed_s, acc, max_acc);
 	}
 	else if (screen == 4){
 		no_fix_screen(DATA.real_time_s, DATA.satellites_s, encoder, aim_pos, PWM_DATA);

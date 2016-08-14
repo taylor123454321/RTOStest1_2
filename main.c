@@ -77,19 +77,14 @@
 /* The task function. */
 void vReadGPS( void *pvParameters );
 void vDisplayTask( void *pvParameters );
-void vFakeGPS( void *pvParameters );
 void vReadButtons( void *pvParameters );
 void vFilterSpeed( void *pvParameters );
 void vEncoder( void *pvParameters );
 void vPWM( void *pvParameters );
 void vReadGPSchar( void *pvParameters );
-//void vCalculateAcceleration( void *pvParameters );
 
 //Global variables
-//char UART_char_data[120];
 char UART_char_data_old[120];
-int index = 0;
-acc_time_s acc_time;
 
 // RTOS semaphore handles
 xSemaphoreHandle  xBinarySemaphoreGPS;
@@ -107,19 +102,6 @@ xQueueHandle xPWM_DATA;
 xQueueHandle xPWM_speed_DATA;
 xQueueHandle xEncoder_raw_DATA;
 xQueueHandle xUART_GPS_DATA;
-
-
-void UARTIntHandler(void) {
-	portBASE_TYPE xHigherprioritytaskWoken = pdFALSE;
-	unsigned long ulStatus;
-	ulStatus = UARTIntStatus(UART0_BASE, true);	// Get the interrupt status.
-	UARTIntClear(UART0_BASE, ulStatus);	        // Clear the asserted interrupts.
-
-	xSemaphoreGiveFromISR(xBinarySemaphoreGPSchar, 0);
-    portEND_SWITCHING_ISR(xHigherprioritytaskWoken);
-}
-
-
 
 /*-----------------------------------------------------------*/
 int main( void ) {
@@ -147,15 +129,11 @@ int main( void ) {
 	/* Create tasks. */
 	xTaskCreate( vReadGPS, "GPS Read Task", 240, NULL, 4, NULL );
 	xTaskCreate( vDisplayTask, "Display Task", 600, NULL, 1, NULL );
-	//xTaskCreate( vFakeGPS, "FakeGPS Task", 300, NULL, 2, NULL );
 	xTaskCreate( vReadButtons, "Debounce Buttons Task", 150, NULL, 2, NULL );
 	xTaskCreate( vFilterSpeed, "Filter Speed Task", 100, NULL, 2, NULL );
 	xTaskCreate( vEncoder, "Encoder Task", 100, NULL, 3, NULL );
 	xTaskCreate( vPWM, "PWM Task", 100, NULL, 3, NULL );
-	xTaskCreate(vReadGPSchar, "ReadGPSchar Task", 250, NULL, 4, NULL);
-
-	//xTaskCreate( vCalculateAcceleration, "Acceleration Task", 240, NULL, 3, NULL );
-
+	xTaskCreate( vReadGPSchar, "ReadGPSchar Task", 250, NULL, 4, NULL);
 
 	IntMasterEnable();
 
@@ -167,14 +145,14 @@ int main( void ) {
 /*Tasks for Program */
 /*-----------------------------------------------------------*/
 
-void store_char(long UART_character){
+char* store_char(long UART_character, char * UART_char_data_old_2){
 	UART_GPS_DATA_s UART_DATA;
 
 	xQueueReceive(xUART_GPS_DATA, &UART_DATA, 0);
 
 	if (UART_character == '$'){
-		UART_char_data_old[0] = '\0';
-		strcpy(UART_char_data_old, UART_DATA.UART_char_data);
+		UART_char_data_old_2[0] = '\0';
+		strcpy(UART_char_data_old_2, UART_DATA.UART_char_data);
 		UART_DATA.index = 0;
 		UART_DATA.UART_char_data[UART_DATA.index] = UART_character;
 		UART_DATA.index ++;
@@ -188,6 +166,7 @@ void store_char(long UART_character){
 
 		xQueueSendToBack(xUART_GPS_DATA, &UART_DATA, 0);
 	}
+	return UART_char_data_old_2;
 }
 
 /* Run to decode GPS NEMA sentence */
@@ -199,7 +178,9 @@ void vReadGPSchar(void *pvParameters){
 		while(UARTCharsAvail(UART0_BASE)) {
 			// Read the next character from the UART and write it back to the UART.
 			// UARTCharPutNonBlocking(UART0_BASE, UARTCharGetNonBlocking(UART0_BASE));
-			store_char(UARTCharGetNonBlocking(UART0_BASE));
+			//store_char(UARTCharGetNonBlocking(UART0_BASE), UART_char_data_old);
+			strcpy(UART_char_data_old, store_char(UARTCharGetNonBlocking(UART0_BASE), UART_char_data_old));
+
 		}
 		xSemaphoreTake(xBinarySemaphoreGPSchar, portMAX_DELAY);                  // Take original semaphore
 	}
@@ -221,15 +202,6 @@ void vReadGPS(void *pvParameters){
 	}
 }
 
-/*void check_for_acc(button_data_s button_data){
-	if (button_data.left == 1 ){
-		vTaskResume(vCalculateAcceleration);
-	}
-	else if (button_data.select == 1) {
-		vTaskSuspend(vCalculateAcceleration);
-	}
-}*/
-
 /* Task to read buttons and store data */
 void vReadButtons(void *pvParameters){
 	button_data_s button_data;
@@ -238,20 +210,11 @@ void vReadButtons(void *pvParameters){
 	while(1){
 		raw_button_data = read_buttons();                 // Read buttons
 		button_data = invert_button(raw_button_data);     // Invert button data
-		//check_for_acc(button_data);
 		xQueueSendToBack(xQueueButtons, &button_data, 0); // Store button data
 
 		vTaskDelay(14 / portTICK_RATE_MS);                // Set Read button task to run at 75Hz
 	}
 }
-
-/*void vCalculateAcceleration(void *pvParameters){
-	vTaskSuspend(vCalculateAcceleration);
-	while(1){
-		acceleration_test(0, acc_time);
-		vTaskDelay(100 / portTICK_RATE_MS); // Set display function to run at 75Hz
-	}
-}*/
 
 /* Task to run after pin change interupt to decode data for encoder */
 void vEncoder(void *pvParameters){
@@ -338,24 +301,12 @@ void vDisplayTask( void *pvParameters ){
 
 		xQueueSendToBack(xPWM_speed_DATA, &PWM_speed_DATA, 0);                         // Sending that data in queue
 
-		display(set_speed.screen, 0, 0, set_speed.set_speed_value, GPS_DATA_DECODED, buffed_speed, encoder_1.angle, 0, UART_char_data_old, 0, 0, acc_time, PWM_DATA); // Main displat function
+		display(set_speed.screen, 0, 0, set_speed.set_speed_value, GPS_DATA_DECODED, buffed_speed, encoder_1.angle, 0, UART_char_data_old, 0, 0, PWM_DATA); // Main displat function
 
 		vTaskDelay(66 / portTICK_RATE_MS);                                             // Set display task to run at 15Hz
 	}
 }
 
-/* Task to fake GPS data and read pot on ADC0 as speed then transmite on UART1 to UART0 */
-void vFakeGPS (void *pvParameters ){
-	char buf[90];       // Buffer for NEMA sentence
-	int fake_speed = 0; //
-
-	while(1){
-		fake_speed = (int)run_adc()/7;                                                                      // Take ADC value and make it a speed
-		sprintf(buf, "$GPRMC,194509.000,A,4042.6142,N,07400.4168,W,%d,221.11,160412,,,A*77\n", fake_speed); // Prepare string for transmiting
-		UARTSend((unsigned char *)buf, 85, 1);                                                              // Transmite speed
-		vTaskDelay(100 / portTICK_RATE_MS);                                                                 // Set fake GPS task to run at 10Hz
-	}
-}
 /*-----------------------------------------------------------*/
 
 void vApplicationMallocFailedHook( void )
