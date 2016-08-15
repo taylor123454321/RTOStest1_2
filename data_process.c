@@ -12,33 +12,22 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <math.h>
-#include "display.h"
 #include "init.h"
-#include "speed.h"
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
-#include "driverlib/timer.h"
-#include "driverlib/systick.h"
 #include "data_process.h"
 #include "include/FreeRTOS.h"
-
 #include "include/semphr.h"
-
 
 #define false 0
 #define true 1
 #define MAX_24BIT_VAL 0X0FFFFFF
 
-
+/* freeRTOS queues and semaphore */
 xQueueHandle xUART_GPS_DATA;
 xSemaphoreHandle  xBinarySemaphoreGPS;
 
-
-int last_time = 0;		// Initialised value for the time of the previous debounce
-
-//FUNCTIONS
-
-
+/* Put new char from GPS in string */
 char* store_char(long UART_character, char * UART_char_data_old_2){
 	UART_GPS_DATA_s UART_DATA;
 
@@ -63,58 +52,7 @@ char* store_char(long UART_character, char * UART_char_data_old_2){
 	return UART_char_data_old_2;
 }
 
-/*float calculate_distance(void){
-	int current_time = SysTickValueGet();
-	int delta_time = 0;
-	if (current_time <= last_time){
-		delta_time = last_time - current_time;
-	}
-	else {
-		delta_time = (last_time + MAX_24BIT_VAL) - current_time;
-	}
-
-	float distance = (buffed_speed/3.6)*(delta_time/10000000);
-
-	last_time = current_time;
-
-	if (distance > 1){
-		return distance;
-	}
-	return 0;
-}*/
-
-
-/*float calculate_accleration(void){
-	float delta = buffed_speed - buffed_speed_1_old;
-	if (delta > 0.5 || delta < -0.5){
-		return delta;
-	}
-	return 0;
-}*/
-
-/*void calculate_speed_future(float a){
-    float s = 1, t = 1, k = 0;// variables used in data
-    int n = 5;
-    int i = 0;
-    int j = 0;
-
-    // a is enter time value we want to find
-    for(i = 0; i < n; i++) {
-         s = 1;
-         t = 1;
-         for(j = 0; j < n; j++) {
-              if(j != i){
-                  s = s*(a - time_array[j]);
-                  t = t*(time_array[i] - time_array[j]);
-              }
-          }
-          k = k + ((s/t)*speed_array[i]); // k is final
-    }
-
-    speed_guessed = k;
-}*/
-
-// Decode fucntion for GGA NEMA sentence
+/* Decode fucntion for GGA NEMA sentence */
 GPS_DATA_DECODED_s decode_GGA(char *p, GPS_DATA_DECODED_s DATA){
 	int32_t degree;
 	long minutes;
@@ -126,7 +64,6 @@ GPS_DATA_DECODED_s decode_GGA(char *p, GPS_DATA_DECODED_s DATA){
 	uint32_t latitudeDegrees = 0;
 	uint32_t longitudeDegrees = 0;
 	char lat, lon;
-
 
 	// GET TIME
 	p = strchr(p, ',')+1;
@@ -222,7 +159,7 @@ GPS_DATA_DECODED_s decode_GGA(char *p, GPS_DATA_DECODED_s DATA){
 	return DATA;
 }
 
-// Decode fucntion for RMC NEMA sentence
+/* Decode fucntion for RMC NEMA sentence */
 GPS_DATA_DECODED_s decode_RMC(char *p, GPS_DATA_DECODED_s DATA){
 	int32_t degree;
 	long minutes;
@@ -334,44 +271,7 @@ GPS_DATA_DECODED_s decode_RMC(char *p, GPS_DATA_DECODED_s DATA){
 	return DATA;
 }
 
-/*void update_array(void){
-	int i;
-	for (i = 0; i < 3; i++){
-		speed_array[i] = speed_array[i+1];
-	}
-	speed_array[4] = speed;
-}*/
-
-/*void Timer0IntHandler(void) {
-    // Clear the timer interrupt.
-    TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-
-    //update_array();
-    distance += calculate_distance();
-    acceleration = calculate_accleration();
-    buffed_speed_1_old = buffed_speed;
-    //IntMasterDisable();
-    //IntMasterEnable();
-}*/
-
-
-// Make one struct instead of two
-/*GPS_DATA_DECODED_s restructure_data(GGA_DATA_s GGA_DATA, RMC_DATA_s RMC_DATA){
-	GPS_DATA_DECODED_s GPS_DATA_DECODED;
-	GPS_DATA_DECODED.HDOP_s = GGA_DATA.HDOP_s;
-	GPS_DATA_DECODED.altitude_s = GGA_DATA.altitude_s;
-	GPS_DATA_DECODED.geoidheight_s = GGA_DATA.geoidheight_s;
-	GPS_DATA_DECODED.real_time_s = GGA_DATA.real_time_s;
-	GPS_DATA_DECODED.location_s = GGA_DATA.location_s;
-	GPS_DATA_DECODED.fixquality_s = GGA_DATA.fixquality_s;
-	GPS_DATA_DECODED.satellites_s = GGA_DATA.satellites_s;
-	GPS_DATA_DECODED.fix_s = RMC_DATA.fix_s;
-	GPS_DATA_DECODED.angle_s = RMC_DATA.angle_s;
-	GPS_DATA_DECODED.speed_s = RMC_DATA.speed_s;
-	return GPS_DATA_DECODED;
-}*/
-
-//Split data up into GGA,GSA,RMC,VTG
+/* Split data up into GGA, GSA, RMC, VTG and only process GGA and RMC */
 GPS_DATA_DECODED_s split_data(char *data_incoming, GPS_DATA_DECODED_s GPS_DATA_DECODED){
 	if (strstr(data_incoming, "GGA") != NULL){
 		GPS_DATA_DECODED = decode_GGA(data_incoming, GPS_DATA_DECODED);
@@ -383,8 +283,6 @@ GPS_DATA_DECODED_s split_data(char *data_incoming, GPS_DATA_DECODED_s GPS_DATA_D
 	}
 	else if (strstr(data_incoming, "VTG") != NULL){
 	}
-
-	//GPS_DATA_DECODED = restructure_data(GGA_DATA, RMC_DATA);
 
 	return GPS_DATA_DECODED;
 }

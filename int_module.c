@@ -18,7 +18,6 @@
 #include "driverlib/interrupt.h"
 #include "driverlib/gpio.h"
 #include "init.h"
-#include "driverlib/timer.h"
 #include "include/FreeRTOS.h"
 #include "include/semphr.h"
 
@@ -26,7 +25,7 @@ xSemaphoreHandle  xBinarySemaphoreGPSchar;
 xSemaphoreHandle  xBinarySemaphoreEncoder_1;
 xQueueHandle xEncoder_raw_DATA;
 
-
+/* Operated when char arrives on UART port*/
 void UARTIntHandler(void) {
 	portBASE_TYPE xHigherprioritytaskWoken = pdFALSE;
 	unsigned long ulStatus;
@@ -37,7 +36,7 @@ void UARTIntHandler(void) {
     portEND_SWITCHING_ISR(xHigherprioritytaskWoken);
 }
 
-
+/* Operates when a pin changes on PF5 or PF7 */
 void EncoderINT (void){
 	encoder_raw_DATA_s encoder_raw_DATA;
 
@@ -55,8 +54,3 @@ void EncoderINT (void){
 	xSemaphoreGiveFromISR(xBinarySemaphoreEncoder_1, &xHigherprioritytaskWoken);
     portEND_SWITCHING_ISR(xHigherprioritytaskWoken);
 }
-
-void Timer0IntHandler(void){
-	TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);}
-void Timer1IntHandler(void){
-	TimerIntClear(TIMER1_BASE, TIMER_TIMA_TIMEOUT);}

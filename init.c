@@ -5,41 +5,29 @@
  *      Author: Ryan Taylor
  */
 
-
 #include <stdbool.h>
-#include "init.h"
+#include "stdlib.h"
 #include "inc/hw_types.h"
 #include "inc/hw_ints.h"
 #include "inc/hw_gpio.h"
 #include "inc/hw_uart.h"
+#include "inc/hw_memmap.h"
 #include "driverlib/adc.h"
 #include "driverlib/pwm.h"
 #include "driverlib/gpio.h"
 #include "driverlib/sysctl.h"
-//#include "driverlib/systick.h"
 #include "driverlib/interrupt.h"
 #include "driverlib/uart.h"
-#include "driverlib/timer.h"
-//#include "pwm.h"
-#include "stdlib.h"
-#include "inc/hw_memmap.h"
 #include "rit128x96x4.h"
 #include "FreeRTOSConfig.h"
-#include "ADC_interface.h"
-
+#include "UART_module.h"
+#include "init.h"
 
 // Defines for the GPS module
 #define BAUD_RATE 9600
 
-
-
-/* The highest available interrupt priority. */
-#define timerHIGHEST_PRIORITY			( 2 )
-
 // Global constants
-
 unsigned long period;	// Period of PWM output.
-
 
 //*****************************************************************************
 // Initialization functions
@@ -57,32 +45,22 @@ void reset_peripheral(void){
 }
 
 void initClock (void) {
-	//
-	// Set the clock rate @
-	//SysCtlClockSet (SYSCTL_SYSDIV_1 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_8MHZ);
-
 	/* Set the clocking to run from the PLL at 50 MHz.  Assumes 8MHz XTAL,
 	whereas some older eval boards used 6MHz. */
   	SysCtlClockSet( SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_8MHZ );
-  	//
-  	// Set up the period for the SysTick timer to get the maximum span.
-  	//SysTickPeriodSet (MAX_24BIT_VAL);
-  	//
-  	// Enable SysTick device (no interrupt)
-  	//SysTickEnable ();
+
 }
 
+/* Enable GPIO for buttons and motor drive pins */
 void initGPIO(void){
-    //SysCtlPeripheralEnable (SYSCTL_PERIPH_GPIOB);
-    //GPIOPadConfigSet (GPIO_PORTB_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
     SysCtlPeripheralEnable (SYSCTL_PERIPH_GPIOG);
     GPIOPadConfigSet (GPIO_PORTG_BASE, GPIO_PIN_7 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
     SysCtlPeripheralEnable (SYSCTL_PERIPH_GPIOF);
-    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3 | GPIO_PIN_1 );//| GPIO_PIN_3 | GPIO_PIN_4);
+    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3 | GPIO_PIN_1 );
 }
 
+/* Init for encoder pin interupts, PF5 and PF7 */
 void initPin (void) {
-    //
     // Register the handler for Port F into the vector table
     //GPIOPortIntRegister (GPIO_PORTF_BASE, PinChangeIntHandler);
     //
@@ -111,24 +89,12 @@ void initPin (void) {
     GPIOPinIntEnable (GPIO_PORTF_BASE, GPIO_PIN_7);
 
     IntEnable (INT_GPIOF);	// Note: INT_GPIOF defined in inc/hw_ints.h
-
 }
 
 
 // intialise the OLED display
 void initDisplay (void) {
 	RIT128x96x4Init(1000000);
-}
-
-// Intialise ADC with all the set up conditions for ADC0
-void initADC(void){
-	  SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
-	  SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-	  GPIOPinTypeADC(GPIO_PORTB_BASE, GPIO_PIN_1);
-	  ADCSequenceConfigure(ADC0_BASE, 3, ADC_TRIGGER_PROCESSOR, 0);
-	  ADCSequenceStepConfigure(ADC0_BASE, 3, 0, ADC_CTL_CH0 | ADC_CTL_IE | ADC_CTL_END);
-	  ADCSequenceEnable(ADC0_BASE, 3);
-	  ADCIntClear(ADC0_BASE, 3);
 }
 
 // Initlise the PWM for pin PWM4. This sets up the period and frequecy also.
@@ -165,7 +131,6 @@ void initPWMchan(void) {
     //
     PWMOutputState (PWM_BASE, PWM_OUT_4_BIT, true);
     PWMOutputState (PWM_BASE, PWM_OUT_1_BIT, true);
-
 }
 
 
@@ -213,38 +178,6 @@ void initConsole (void) {
 	//
 	UARTFIFOEnable(UART1_BASE);
 	UARTEnable(UART1_BASE);
-
-}
-
-void initTimer(void){
-	//
-	// Enable the peripherals used by this example.
-	//
-	SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
-	SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER1);
-	//
-	// Enable processor interrupts.
-	//
-
-	//
-	// Configure the two 32-bit periodic timers.
-	//
-	TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
-	TimerConfigure(TIMER1_BASE, TIMER_CFG_PERIODIC);
-	TimerLoadSet(TIMER0_BASE, TIMER_A, SysCtlClockGet());
-	TimerLoadSet(TIMER1_BASE, TIMER_A, SysCtlClockGet()/10);
-	//
-	// Setup the interrupts for the timer timeouts.
-	//
-	IntEnable(INT_TIMER0A);
-	IntEnable(INT_TIMER1A);
-	TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-	TimerIntEnable(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
-	//
-	// Enable the timers.
-	//
-	TimerEnable(TIMER0_BASE, TIMER_A);
-	TimerEnable(TIMER1_BASE, TIMER_A);
 }
 
 /* Runs main init for program */
@@ -253,11 +186,9 @@ void main_init(void){
     reset_peripheral();
     initClock();
     initPin();
-    initTimer();
     initGPIO();
     initConsole();
     initPWMchan();
-    initADC();
     initDisplay();                  // intialise the OLED display
     send_data();send_data();send_data();
 }
@@ -278,17 +209,11 @@ float * initCircBuf (circBuf_t *buffer, unsigned int size) {
 	return buffer->data;
 }
 
+/* Sets up struct with zeros */
 void init_set_speed_data(cruise_data *data){
 	data->speed = 0;
 	data->enable = 0;
 	data->old = 0;
 }
 
-void init_acc_time(acc_time_s *data){
-	data->acc20 = 0;
-	data->acc40 = 0;
-	data->acc60 = 0;
-	data->acc80 = 0;
-	data->acc100 = 0;
-}
 

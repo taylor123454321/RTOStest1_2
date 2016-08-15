@@ -35,19 +35,17 @@ void PinChangeIntHandler (void);
 // Clears all the peripheral used
 void reset_peripheral(void);
 
-// Sets up the proccesor speed and system tick clock
+// Sets up the proccesor speed
 void initClock (void);
 
+/* Enable GPIO for buttons and motor drive pins */
 void initGPIO(void);
 
-// Sets up the interrupt pins to PF7 and PF5 to be used for the Yaw
+/* Init for encoder pin interupts, PF5 and PF7 */
 void initPin (void);
 
 // Intialise the OLED display
 void initDisplay (void);
-
-// Intialise ADC with all the set up conditions for ADC0
-void initADC(void);
 
 // Initlise the PWM for pin PWM4. This sets up the period and frequecy also.
 void initPWMchan (void);
@@ -56,9 +54,10 @@ void initConsole (void);
 
 void initTimer(void);
 
+/* Runs main init for program */
 void main_init(void);
 
-// Strut for time
+/* Strut for time */
 typedef struct{
 	uint8_t year;
 	uint8_t month;
@@ -69,27 +68,18 @@ typedef struct{
 	uint16_t milliseconds;
 } clock;
 
-// struct for location
+/* struct for location */
 typedef struct{
 	int32_t longitude_s;
 	int32_t latitude_s;
 }long_lat;
 
-// speed data
+/* Speed data */
 typedef struct {
 	float speed;
 	bool enable;
 	float old;
 }cruise_data;
-
-// acceleration timing data
-typedef struct {
-	float acc20;
-	float acc40;
-	float acc60;
-	float acc80;
-	float acc100;
-}acc_time_s;
 
 //*****************************************************************************
 // Buffer type declaration - set of unsigned longs
@@ -101,8 +91,7 @@ typedef struct {
 	float *data;	// pointer to the data
 } circBuf_t;
 
-
-// Data from GPS feed into decoder, this is the struct for that data
+/* Data from GPS feed into decoder, this is the struct for that data */
 typedef struct {
 	clock real_time_s;
 	long_lat location_s;
@@ -116,6 +105,7 @@ typedef struct {
 	float speed_s;
 } GPS_DATA_DECODED_s;
 
+/* Button data */
 typedef struct{
 	bool left;
 	bool right;
@@ -124,6 +114,7 @@ typedef struct{
 	bool select;
 } button_data_s;
 
+/* Button data Raw */
 typedef struct{
 	bool left;
 	bool right;
@@ -132,37 +123,42 @@ typedef struct{
 	bool select;
 } button_data_raw_s;
 
+/* Encoder positon */
 typedef struct{
 	int prev_state;
 	int angle;
 } encoder_s;
 
+/* PWM duty and direction */
 typedef struct{
 	unsigned long duty;
 	int direction;
 } PWM_DATA_s;
 
+/* Set speed and screen */
 typedef struct{
 	int set_speed_value;
 	bool is_speed_set;
 	int screen;
 } set_speed_s;
 
+/* speed and set speed */
 typedef struct{
 	float speed;
 	int set_speed;
 } PWM_speed_DATA_s;
 
+/* Pin change interput for encoder */
 typedef struct{
 	unsigned long ul_A_Val;
 	unsigned long ul_B_Val;
 } encoder_raw_DATA_s;
 
+/* UART GPS char */
 typedef struct {
 	int index;
 	char UART_char_data[90];
 } UART_GPS_DATA_s;
-
 
 
 // *******************************************************
@@ -173,8 +169,7 @@ typedef struct {
 // *******************************************************
 float * initCircBuf (circBuf_t *buffer, unsigned int size);
 
+/* Sets up struct with zeros */
 void init_set_speed_data(cruise_data *data);
-
-void init_acc_time(acc_time_s *data);
 
 #endif /* INIT_H_ */

@@ -7,8 +7,8 @@ CMD_SRCS += \
 ../lm3s1968.cmd 
 
 C_SRCS += \
-../ADC_interface.c \
 ../PWM_module.c \
+../UART_module.c \
 ../button_data.c \
 ../data_process.c \
 ../display.c \
@@ -23,8 +23,8 @@ C_SRCS += \
 ../tasks.c 
 
 OBJS += \
-./ADC_interface.obj \
 ./PWM_module.obj \
+./UART_module.obj \
 ./button_data.obj \
 ./data_process.obj \
 ./display.obj \
@@ -39,8 +39,8 @@ OBJS += \
 ./tasks.obj 
 
 C_DEPS += \
-./ADC_interface.d \
 ./PWM_module.d \
+./UART_module.d \
 ./button_data.d \
 ./data_process.d \
 ./display.d \
@@ -55,8 +55,8 @@ C_DEPS += \
 ./tasks.d 
 
 C_DEPS__QUOTED += \
-"ADC_interface.d" \
 "PWM_module.d" \
+"UART_module.d" \
 "button_data.d" \
 "data_process.d" \
 "display.d" \
@@ -71,8 +71,8 @@ C_DEPS__QUOTED += \
 "tasks.d" 
 
 OBJS__QUOTED += \
-"ADC_interface.obj" \
 "PWM_module.obj" \
+"UART_module.obj" \
 "button_data.obj" \
 "data_process.obj" \
 "display.obj" \
@@ -87,8 +87,8 @@ OBJS__QUOTED += \
 "tasks.obj" 
 
 C_SRCS__QUOTED += \
-"../ADC_interface.c" \
 "../PWM_module.c" \
+"../UART_module.c" \
 "../button_data.c" \
 "../data_process.c" \
 "../display.c" \

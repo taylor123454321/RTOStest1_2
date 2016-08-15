@@ -15,13 +15,11 @@
 #include "inc/hw_types.h"
 #include "inc/hw_uart.h"
 #include "driverlib/uart.h"
-#include "driverlib/adc.h"
-
-
 
 #define false 0
 #define true 1
 
+/* NEMA sentances for GPS data */
 #define PMTK_SET_NMEA_UPDATE_5HZ  "$PMTK220,200*2C\r\n" // Frequency 5Hz
 #define PMTK_SET_NMEA_UPDATE_10HZ "$PMTK220,100*2F\r\n" // Frequency 10Hz
 #define PMTK_SET_NMEA_OUTPUT_RMCGGA "$PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28\r\n"// turn on GPRMC and GGA
@@ -30,7 +28,7 @@
 #define PGCMD_NOANTENNA "$PGCMD,33,0*6D\r\n"
 
 
-// UART Send data, used in conjuction with send_data()
+/* UART Send data, used in conjuction with send_data() */
 void UARTSend(const unsigned char *pucBuffer, unsigned long ulCount, int type) {
     //
     // Loop while there are more characters to send.
@@ -46,12 +44,11 @@ void UARTSend(const unsigned char *pucBuffer, unsigned long ulCount, int type) {
         //
         // Write the next character to the UART.
         //
-        //UARTCharPutNonBlocking(base, *pucBuffer++);
     	UARTCharPut(base, *pucBuffer++);
     }
 }
 
-// Send instruction to the GPS to set up how to frequency and inputs
+/* Send instruction to the GPS to set up how to frequency and serial data outputs */
 void send_data(void){
 	int i = 0;
 	while(i <= 100000){i++;}
@@ -66,20 +63,3 @@ void send_data(void){
 	UARTSend((unsigned char *)PGCMD_NOANTENNA, 16,0); // Set no antenna
 }
 
-
-// This function reads the value from ADC0 and returns it
-unsigned long run_adc(void){
-	uint16_t uiValue = 10;
-	unsigned long ulValue[1];
-	ADCProcessorTrigger(ADC0_BASE, 3);
-	//
-	// Wait for conversion to be completed.
-	while(!ADCIntStatus(ADC0_BASE, 3, false))
-	{
-	}
-	// Read ADC Value.
-	ADCSequenceDataGet(ADC0_BASE, 3, ulValue);
-	uiValue = (unsigned int) ulValue[0];
-
-	return uiValue;
-}

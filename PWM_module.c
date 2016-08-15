@@ -20,11 +20,11 @@
 
 #define PWM_MIN_DUTY 14
 
-
+/* Macro for chaging pin state */
 #define GPIOHigh(x) GPIOPinWrite(GPIO_PORTF_BASE, x, x)
 #define GPIOLow(x) GPIOPinWrite(GPIO_PORTF_BASE, x, 0)
 
-
+/* Based on PWM duty this function picks the direction of the motor */
 int find_dir(int aim_pos){
 	int direction = 0;
 	if (aim_pos > 0){
@@ -39,7 +39,7 @@ int find_dir(int aim_pos){
 	return direction;
 }
 
-// this function connects speed to carb/rpm
+/* This function connects speed to carb/rpm for the two control loops of the program*/
 PWM_DATA_s speed_feedback(PWM_speed_DATA_s PWM_speed_DATA, encoder_s encoder_1, PWM_DATA_s PWM_DATA){
 	int aim_pos = 0;// this is the position the motor goes to
 	int error_speed = PWM_speed_DATA.set_speed - PWM_speed_DATA.speed;
@@ -65,11 +65,12 @@ PWM_DATA_s speed_feedback(PWM_speed_DATA_s PWM_speed_DATA, encoder_s encoder_1, 
 	return PWM_DATA;
 }
 
-
+/* Set duty cycle */
 void PWM_duty(PWM_DATA_s PWM_DATA, unsigned long period){
 	PWMPulseWidthSet (PWM_BASE, PWM_OUT_4, period * PWM_DATA.duty / 100);
 }
 
+/* Sets the pin high or low for direction of motor */
 void PWM_direction(PWM_DATA_s PWM_DATA){
 	if (PWM_DATA.direction == 1){ // turns motor CCW
 		GPIOHigh(GPIO_PIN_3);

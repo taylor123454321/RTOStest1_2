@@ -10,30 +10,17 @@
 
 #include <stdint.h>
 #include "init.h"
-#include "driverlib/timer.h"
 
+/* Put new char from GPS in string */
 char* store_char(long UART_character, char * UART_char_data_old_2);
 
-//float calculate_distance(void);
-
-//float calculate_accleration(void);
-
-//void calculate_speed_future(float a);
-
+/* Decode fucntion for GGA NEMA sentence */
 GPS_DATA_DECODED_s decode_GGA(char *p, GPS_DATA_DECODED_s DATA);
 
+/* Decode fucntion for RMC NEMA sentence */
 GPS_DATA_DECODED_s decode_RMC(char *p, GPS_DATA_DECODED_s DATA);
 
-//void update_array(void);
-
-//void Timer0IntHandler(void);
-
-//GPS_DATA_DECODED_s restructure_data(GGA_DATA_s GGA_DATA, RMC_DATA_s RMC_DATA);
-
+/* Split data up into GGA, GSA, RMC, VTG and only process GGA and RMC */
 GPS_DATA_DECODED_s split_data(char *data_incoming, GPS_DATA_DECODED_s GPS_DATA_DECODED);
-
-
-
-
 
 #endif /* DATA_PROCESS_H_ */

@@ -1,43 +1,19 @@
 /*
-    FreeRTOS V6.0.5 - Copyright (C) 2009 Real Time Engineers Ltd.
-
-    This file is part of the FreeRTOS distribution.
-
-    FreeRTOS is free software; you can redistribute it and/or modify it under
-    the terms of the GNU General Public License (version 2) as published by the
-    Free Software Foundation AND MODIFIED BY the FreeRTOS exception.
-    ***NOTE*** The exception to the GPL is included to allow you to distribute
-    a combined work that includes FreeRTOS without being obliged to provide the
-    source code for proprietary components outside of the FreeRTOS kernel.
-    FreeRTOS is distributed in the hope that it will be useful, but WITHOUT
-    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-    more details. You should have received a copy of the GNU General Public 
-    License and the FreeRTOS license exception along with FreeRTOS; if not it 
-    can be viewed here: http://www.freertos.org/a00114.html and also obtained 
-    by writing to Richard Barry, contact details for whom are available on the
-    FreeRTOS WEB site.
-
-    1 tab == 4 spaces!
-
-    http://www.FreeRTOS.org - Documentation, latest information, license and
-    contact details.
-
-    http://www.SafeRTOS.com - A version that is certified for use in safety
-    critical systems.
-
-    http://www.OpenRTOS.com - Commercial support, development, porting,
-    licensing and training services.
+ *  	Crusie control program
+ *  	Created on: May 13, 2015
+ *  	Last changed on: Aug 15, 2016
+ *      Author: Ryan Taylor
 */
-
 /* C includes */
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <math.h>
 
 /* FreeRTOS includes. */
-
 #include "include/FreeRTOS.h"
 #include "include/task.h"
 #include "include/semphr.h"
@@ -52,10 +28,6 @@
 #include "driverlib/interrupt.h"
 #include "driverlib/gpio.h"
 #include "driverlib/timer.h"
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
-#include <math.h>
 
 /* User made library includes */
 #include "init.h"
@@ -63,17 +35,13 @@
 #include "display.h"
 #include "speed.h"
 #include "demo_code\basic_io.h"
-#include "ADC_interface.h"
 #include "button_data.h"
 #include "PWM_module.h"
 #include "int_module.h"
+#include "UART_module.h"
 
 
-
-/* Used as a loop counter to create a very crude delay. */
-#define mainDELAY_LOOP_COUNT		( 0xfffff )
 #define BUF_SIZE 8
-
 
 /* The task function. */
 void vReadGPS( void *pvParameters );
@@ -153,10 +121,8 @@ void vReadGPSchar(void *pvParameters){
 	while(1) {
 		// Loop while there are characters in the receive FIFO.
 		while(UARTCharsAvail(UART0_BASE)) {
-			// Read the next character from the UART and write it back to the UART.
-			// UARTCharPutNonBlocking(UART0_BASE, UARTCharGetNonBlocking(UART0_BASE));
-			//store_char(UARTCharGetNonBlocking(UART0_BASE), UART_char_data_old);
-			strcpy(UART_char_data_old, store_char(UARTCharGetNonBlocking(UART0_BASE), UART_char_data_old));
+			long UART_char = UARTCharGetNonBlocking(UART0_BASE);
+			strcpy(UART_char_data_old, store_char(UART_char, UART_char_data_old));
 
 		}
 		xSemaphoreTake(xBinarySemaphoreGPSchar, portMAX_DELAY);                  // Take original semaphore
@@ -186,7 +152,7 @@ void vReadButtons(void *pvParameters){
     
 	while(1){
 		raw_button_data = read_buttons();                 // Read buttons
-		button_data = invert_button(raw_button_data);     // Invert button data
+		button_data = invert_buttons(raw_button_data);     // Invert button data
 		xQueueSendToBack(xQueueButtons, &button_data, 0); // Store button data
 
 		vTaskDelay(14 / portTICK_RATE_MS);                // Set Read button task to run at 75Hz
@@ -212,17 +178,16 @@ void vEncoder(void *pvParameters){
 /* Task to update PWM and calculate control of motor positon */
 void vPWM(void *pvParameters){
 	unsigned long period = SysCtlClockGet () / PWM_DIVIDER / PWM4_RATE_HZ;	// Period of PWM output.
-	encoder_s encoder_1;                                               // Encoder position
-	PWM_DATA_s PWM_DATA;                                               // PWM duty cycle and direction
-	PWM_speed_DATA_s PWM_speed_DATA;                                   // Speed and set speed data used for controlling speed of car
+	encoder_s encoder_1;             // Encoder position
+	PWM_DATA_s PWM_DATA;             // PWM duty cycle and direction
+	PWM_speed_DATA_s PWM_speed_DATA; // Speed and set speed data used for controlling speed of car
 
-	PWM_DATA.duty = 20;
+	PWM_DATA.duty = 0;
 	PWM_DATA.direction = 0;
 
 	while(1){
 		xQueueReceive(xEncoder_1, &encoder_1, 0);
-		xQueueReceive(xPWM_speed_DATA, &PWM_speed_DATA, 0);
-
+		xQueueReceive(xPWM_speed_DATA, &PWM_speed_DATA, 0);				// Get data from queues
 
 		PWM_DATA = speed_feedback(PWM_speed_DATA, encoder_1, PWM_DATA); // Function to run two closed loop control circuits
 		PWM_direction(PWM_DATA);                                        // Update PWM perhferial
@@ -255,13 +220,12 @@ void vDisplayTask( void *pvParameters ){
 	button_data_s button_data;           // Button data
 	float buffed_speed = 0;              // Filtered speed
 	set_speed_s set_speed;               // Set speed struct
-	set_speed.set_speed_value = 80;      // Init set speed struct
-	set_speed.is_speed_set = 0;
-	set_speed.screen = 0;
 	encoder_s encoder_1;
 	PWM_DATA_s PWM_DATA;
     PWM_speed_DATA_s PWM_speed_DATA;     // Speed and set speed data used for controlling speed of car
-    //UART_GPS_DATA_s GPS_DATA;
+	set_speed.set_speed_value = 80;      // Init set speed struct
+	set_speed.is_speed_set = 0;
+	set_speed.screen = 0;
 
 	while(1) {
 		xQueueReceive(xQueueGPSDATA, &GPS_DATA_DECODED, 0); // Recive data from various queues
@@ -270,15 +234,14 @@ void vDisplayTask( void *pvParameters ){
 		xQueuePeek(xEncoder_1, &encoder_1, 0);
 		xQueueReceive(xPWM_DATA, &PWM_DATA, 0);
 
-		set_speed = read_button_screen(button_data,set_speed, 1);// GPS_DATA_DECODED.fix_s); // Read buttons for selecting screen/state of program
+		set_speed = read_button_screen(button_data,set_speed, 1); 					   // Read buttons for selecting screen/state of program
 		set_speed = set_speed_func(set_speed, button_data, buffed_speed);              // Seting the speed you want to cruise at
 		PWM_speed_DATA.set_speed = set_speed.set_speed_value;                          // Transfering data for PWM control
 		PWM_speed_DATA.speed = GPS_DATA_DECODED.speed_s;
-		//xQueuePeek(xUART_GPS_DATA, &GPS_DATA, 0);
 
 		xQueueSendToBack(xPWM_speed_DATA, &PWM_speed_DATA, 0);                         // Sending that data in queue
 
-		display(set_speed.screen, 0, 0, set_speed.set_speed_value, GPS_DATA_DECODED, buffed_speed, encoder_1.angle, 0, UART_char_data_old, 0, 0, PWM_DATA); // Main displat function
+		display(set_speed.screen, 0, 0, set_speed.set_speed_value, GPS_DATA_DECODED, buffed_speed, encoder_1.angle, 0, UART_char_data_old, 0, 0, PWM_DATA); // Main display function
 
 		vTaskDelay(66 / portTICK_RATE_MS);                                             // Set display task to run at 15Hz
 	}
