@@ -11,6 +11,10 @@
 #include <stdint.h>
 #include "init.h"
 
+/* DEFINES */
+#define PWM_MIN_DUTY 14
+
+
 /* Based on PWM duty this function picks the direction of the motor */
 int find_dir(int aim_pos);
 
