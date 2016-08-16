@@ -1,5 +1,5 @@
 /*
- *  	Crusie control program
+ *  	Cruise control program
  *  	Created on: May 13, 2015
  *  	Last changed on: Aug 15, 2016
  *      Author: Ryan Taylor
@@ -39,7 +39,6 @@
 #include "PWM_module.h"
 #include "int_module.h"
 #include "UART_module.h"
-
 
 #define BUF_SIZE 8
 
@@ -83,24 +82,25 @@ int main( void ) {
 	vSemaphoreCreateBinary(xBinarySemaphoreEncoder_1);
 
     /* Creates Queues */
-	xQueueGPSDATA = xQueueCreate( 1, sizeof(GPS_DATA_DECODED_s));
-	xQueueButtons = xQueueCreate( 1, sizeof(button_data_s));
-	xQueueSpeed = xQueueCreate( 1, sizeof(float));
+	xQueueGPSDATA     = xQueueCreate( 1, sizeof(GPS_DATA_DECODED_s));
+	xQueueButtons     = xQueueCreate( 1, sizeof(button_data_s));
+	xQueueSpeed       = xQueueCreate( 1, sizeof(float));
 	xQueueBuffedSpeed = xQueueCreate( 1, sizeof(float));
-	xEncoder_1 = xQueueCreate( 1, sizeof(encoder_s));
-	xPWM_DATA = xQueueCreate( 1, sizeof(PWM_DATA_s));
-	xPWM_speed_DATA = xQueueCreate( 1, sizeof(PWM_speed_DATA_s));
+	xEncoder_1        = xQueueCreate( 1, sizeof(encoder_s));
+	xPWM_DATA         = xQueueCreate( 1, sizeof(PWM_DATA_s));
+	xPWM_speed_DATA   = xQueueCreate( 1, sizeof(PWM_speed_DATA_s));
 	xEncoder_raw_DATA = xQueueCreate( 1, sizeof(PWM_DATA_s));
-	xUART_GPS_DATA = xQueueCreate( 1, sizeof(UART_GPS_DATA_s));
+	xUART_GPS_DATA    = xQueueCreate( 1, sizeof(UART_GPS_DATA_s));
 
 	/* Create tasks. */
-	xTaskCreate( vReadGPS, "GPS Read Task", 240, NULL, 4, NULL );
-	xTaskCreate( vDisplayTask, "Display Task", 600, NULL, 1, NULL );
-	xTaskCreate( vReadButtons, "Debounce Buttons Task", 150, NULL, 2, NULL );
-	xTaskCreate( vFilterSpeed, "Filter Speed Task", 100, NULL, 2, NULL );
-	xTaskCreate( vEncoder, "Encoder Task", 100, NULL, 3, NULL );
-	xTaskCreate( vPWM, "PWM Task", 100, NULL, 3, NULL );
-	xTaskCreate( vReadGPSchar, "ReadGPSchar Task", 250, NULL, 4, NULL);
+	xTaskCreate( vReadGPS,     "GPS Read Task",     240, NULL, 4, NULL );
+    xTaskCreate( vReadGPSchar, "ReadGPSchar Task",  250, NULL, 4, NULL);
+	xTaskCreate( vPWM,         "PWM Task",          100, NULL, 3, NULL );
+    xTaskCreate( vEncoder,     "Encoder Task",      100, NULL, 3, NULL );
+    xTaskCreate( vFilterSpeed, "Filter Speed Task", 100, NULL, 2, NULL );
+    xTaskCreate( vReadButtons, "Read Buttons Task", 150, NULL, 2, NULL );
+    xTaskCreate( vDisplayTask, "Display Task",      600, NULL, 1, NULL );
+
 
 	IntMasterEnable();
 
@@ -111,15 +111,11 @@ int main( void ) {
 
 /*Tasks for Program */
 /*-----------------------------------------------------------*/
-
-
-
 /* Run to decode GPS NEMA sentence */
 void vReadGPSchar(void *pvParameters){
 	xSemaphoreTake(xBinarySemaphoreGPSchar, 0);
 
-	while(1) {
-		// Loop while there are characters in the receive FIFO.
+    while(1) { // Loop while there are characters in the receive FIFO.
 		while(UARTCharsAvail(UART0_BASE)) {
 			long UART_char = UARTCharGetNonBlocking(UART0_BASE);
 			strcpy(UART_char_data_old, store_char(UART_char, UART_char_data_old));
@@ -128,6 +124,7 @@ void vReadGPSchar(void *pvParameters){
 		xSemaphoreTake(xBinarySemaphoreGPSchar, portMAX_DELAY);                  // Take original semaphore
 	}
 }
+
 /* Run to decode GPS NEMA sentence */
 void vReadGPS(void *pvParameters){
 	xSemaphoreTake(xBinarySemaphoreGPS, 0);
@@ -152,7 +149,7 @@ void vReadButtons(void *pvParameters){
     
 	while(1){
 		raw_button_data = read_buttons();                 // Read buttons
-		button_data = invert_buttons(raw_button_data);     // Invert button data
+		button_data = invert_buttons(raw_button_data);    // Invert button data
 		xQueueSendToBack(xQueueButtons, &button_data, 0); // Store button data
 
 		vTaskDelay(14 / portTICK_RATE_MS);                // Set Read button task to run at 75Hz
@@ -161,10 +158,10 @@ void vReadButtons(void *pvParameters){
 
 /* Task to run after pin change interupt to decode data for encoder */
 void vEncoder(void *pvParameters){
+    xSemaphoreTake(xBinarySemaphoreEncoder_1, 0);
 	encoder_raw_DATA_s encoder_raw_DATA;
 	encoder_s encoder_1;
 	encoder_1.angle = 0;
-	xSemaphoreTake(xBinarySemaphoreEncoder_1, 0);
 
 	while(1){
 		xQueueReceive(xEncoder_raw_DATA, &encoder_raw_DATA, 0);   // Get pin change data
@@ -234,21 +231,20 @@ void vDisplayTask( void *pvParameters ){
 		xQueuePeek(xEncoder_1, &encoder_1, 0);
 		xQueueReceive(xPWM_DATA, &PWM_DATA, 0);
 
-		set_speed = read_button_screen(button_data,set_speed, 1); 					   // Read buttons for selecting screen/state of program
-		set_speed = set_speed_func(set_speed, button_data, buffed_speed);              // Seting the speed you want to cruise at
-		PWM_speed_DATA.set_speed = set_speed.set_speed_value;                          // Transfering data for PWM control
+		set_speed = read_button_screen(button_data,set_speed, 1);         // Read buttons for selecting screen/state of program
+		set_speed = set_speed_func(set_speed, button_data, buffed_speed); // Seting the speed you want to cruise at
+		PWM_speed_DATA.set_speed = set_speed.set_speed_value;             // Transfering data for PWM control
 		PWM_speed_DATA.speed = GPS_DATA_DECODED.speed_s;
 
-		xQueueSendToBack(xPWM_speed_DATA, &PWM_speed_DATA, 0);                         // Sending that data in queue
+		xQueueSendToBack(xPWM_speed_DATA, &PWM_speed_DATA, 0);            // Sending that data in queue
 
 		display(set_speed.screen, 0, 0, set_speed.set_speed_value, GPS_DATA_DECODED, buffed_speed, encoder_1.angle, 0, UART_char_data_old, 0, 0, PWM_DATA); // Main display function
 
-		vTaskDelay(66 / portTICK_RATE_MS);                                             // Set display task to run at 15Hz
+		vTaskDelay(66 / portTICK_RATE_MS);                                // Set display task to run at 15Hz
 	}
 }
 
 /*-----------------------------------------------------------*/
-
 void vApplicationMallocFailedHook( void )
 {
 	/* This function will only be called if an API call to create a task, queue

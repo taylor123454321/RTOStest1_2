@@ -9,7 +9,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
-#include <RTOStest1/button_data.h>
 #include <stdint.h>
 #include "speed.h"
 #include "display.h"
@@ -17,16 +16,10 @@
 #include "inc/hw_uart.h"
 #include "inc/hw_memmap.h"
 #include "data_process.h"
+#include "button_data.h"
 #include "init.h"
 
-
-
-
-
-#define PI 3.14159265358979323846
-#define BUF_SIZE 8
-
-
+/* This function sets the speed for the car to stay at and make sure its with in the min and max bounds */
 set_speed_s set_speed_func(set_speed_s set_speed, button_data_s button_data, float speed){
 	if (set_speed.is_speed_set == 1){
 		set_speed.set_speed_value = speed;
@@ -34,22 +27,22 @@ set_speed_s set_speed_func(set_speed_s set_speed, button_data_s button_data, flo
 	}
 	else {
 		if (button_data.up == 1){
-			if (set_speed.set_speed_value >= 130){// over 130 it will be capped
-				set_speed.set_speed_value = 130;
+			if (set_speed.set_speed_value >= MAX_SET_SPEED){      // Greater than 130 is capped
+				set_speed.set_speed_value = MAX_SET_SPEED;
 			}
-			else if (set_speed.set_speed_value <= 50){// less then 50 is capped
-				set_speed.set_speed_value = 50;
+			else if (set_speed.set_speed_value <= MIN_SET_SPEED){ // Less than 50 is capped
+				set_speed.set_speed_value = MIN_SET_SPEED;
 			}
 			else{
 				set_speed.set_speed_value ++;
 			}
 		}
 		else if (button_data.down == 1){
-			if (set_speed.set_speed_value <= 50){// less then 50 is capped
-				set_speed.set_speed_value = 50;
+			if (set_speed.set_speed_value <= MIN_SET_SPEED){      // Less than 50 is capped
+				set_speed.set_speed_value = MIN_SET_SPEED;
 			}
-			else if (set_speed.set_speed_value >= 130){// over 130 it will be capped
-				set_speed.set_speed_value = 130;
+			else if (set_speed.set_speed_value >= MAX_SET_SPEED){ // Greater than 130 is capped
+				set_speed.set_speed_value = MAX_SET_SPEED;
 			}
 			else {
 				set_speed.set_speed_value --;
@@ -61,7 +54,7 @@ set_speed_s set_speed_func(set_speed_s set_speed, button_data_s button_data, flo
 
 
 
-// This function stores the altitude in a buffer "speed_buffer" for analysis later
+/* This function stores the Speed in a buffer for analysis later */
 circBuf_t store_speed(float single_speed, circBuf_t speed_buffer){
 	if (single_speed > 150 ){
 		single_speed = 150;
@@ -74,7 +67,7 @@ circBuf_t store_speed(float single_speed, circBuf_t speed_buffer){
 	return speed_buffer;
 }
 
-// Store speed in buffer
+/* Get speed from buffer */
 float analysis_speed(circBuf_t speed_buffer){
 	int i = 0;
 	float speed_sum = 0;
@@ -83,9 +76,10 @@ float analysis_speed(circBuf_t speed_buffer){
 	return (speed_sum/BUF_SIZE);
 }
 
+/* Decode encoder interupt pin state change */
 encoder_s encoder_quad(encoder_s encoder, encoder_raw_DATA_s encoder_raw_DATA){
 	int current_state = 0;
-	if (!encoder_raw_DATA.ul_A_Val){ //Check what state the pins at and assign that state to "current state"
+	if (!encoder_raw_DATA.ul_A_Val){       //Check what state the pins at and assign that state to "current state"
 		if(!encoder_raw_DATA.ul_B_Val){
 			current_state = 1;
 		}
@@ -124,35 +118,4 @@ encoder_s encoder_quad(encoder_s encoder, encoder_raw_DATA_s encoder_raw_DATA){
 	encoder.prev_state = current_state; // Assign current state for next time the interrupt runs
 	return encoder;
 }
-
-
-
-
-/*void acceleration_test(float speed, acc_time_s acc_times){
-	int current_acc_time = 0;
-	bool started = 0;
-	if (speed < 3){
-		current_acc_time = 0;
-		init_acc_time(&acc_times); //reset time
-	}
-	if (speed > 3 && started == 0) {
-		started = 1;
-	}
-	if (speed > 20 && acc_times.acc20 == 0){
-		acc_times.acc20 = current_acc_time;
-	}
-	if (speed > 40 && acc_times.acc40 == 0){
-		acc_times.acc40 = current_acc_time;
-	}
-	if (speed > 60 && acc_times.acc60 == 0){
-		acc_times.acc60 = current_acc_time;
-	}
-	if (speed > 80 && acc_times.acc80 == 0){
-		acc_times.acc80 = current_acc_time;
-	}
-	if (speed > 100 && acc_times.acc100 == 0) {
-		acc_times.acc100 = current_acc_time;
-		started = 0;			 //finished
-	}
-}*/
 

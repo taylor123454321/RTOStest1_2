@@ -18,8 +18,6 @@
 #include "driverlib/gpio.h"
 #include "init.h"
 
-#define PWM_MIN_DUTY 14
-
 /* Macro for chaging pin state */
 #define GPIOHigh(x) GPIOPinWrite(GPIO_PORTF_BASE, x, x)
 #define GPIOLow(x) GPIOPinWrite(GPIO_PORTF_BASE, x, 0)

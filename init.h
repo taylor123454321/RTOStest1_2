@@ -15,27 +15,20 @@
 // Contstants
 // *******************************************************
 
-#define SYSTICK_RATE_HZ 1000ul
 #define PWM4_RATE_HZ 150
 #define PWM_DIV_CODE SYSCTL_PWMDIV_4
 #define PWM_DIVIDER 4
 #define PWM4_DEF_DUTY 50
-#define MAX_24BIT_VAL 0X0FFFFFF
-
-// *******************************************************
-// Prototype functions
-// *******************************************************
-
-void PinChangeIntHandler (void);
+#define BAUD_RATE_GPS 9600
 
 // *******************************************************
 // Initial functions
 // *******************************************************
 
-// Clears all the peripheral used
+/* Clears all the peripheral used */
 void reset_peripheral(void);
 
-// Sets up the proccesor speed
+/* Sets up the proccesor speed */
 void initClock (void);
 
 /* Enable GPIO for buttons and motor drive pins */
@@ -44,15 +37,14 @@ void initGPIO(void);
 /* Init for encoder pin interupts, PF5 and PF7 */
 void initPin (void);
 
-// Intialise the OLED display
+/* Init the OLED display */
 void initDisplay (void);
 
-// Initlise the PWM for pin PWM4. This sets up the period and frequecy also.
+/* Initlise the PWM for pin PWM4. This sets up the period and frequecy also */
 void initPWMchan (void);
 
+/* Initialize UART0 - 8 bits, 1 stop bit, no parity */
 void initConsole (void);
-
-void initTimer(void);
 
 /* Runs main init for program */
 void main_init(void);

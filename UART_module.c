@@ -1,10 +1,9 @@
 /*
- * data_process.c
+ * UART_module.c
  *
  *  Created on: 30/08/2015
  *      Author: Ryan Taylor
  */
-//INCLUDEDS
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,17 +14,6 @@
 #include "inc/hw_types.h"
 #include "inc/hw_uart.h"
 #include "driverlib/uart.h"
-
-#define false 0
-#define true 1
-
-/* NEMA sentances for GPS data */
-#define PMTK_SET_NMEA_UPDATE_5HZ  "$PMTK220,200*2C\r\n" // Frequency 5Hz
-#define PMTK_SET_NMEA_UPDATE_10HZ "$PMTK220,100*2F\r\n" // Frequency 10Hz
-#define PMTK_SET_NMEA_OUTPUT_RMCGGA "$PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28\r\n"// turn on GPRMC and GGA
-// request for updates on antenna status
-#define PGCMD_ANTENNA "$PGCMD,33,1*6C\r\n"
-#define PGCMD_NOANTENNA "$PGCMD,33,0*6D\r\n"
 
 
 /* UART Send data, used in conjuction with send_data() */

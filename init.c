@@ -24,7 +24,6 @@
 #include "init.h"
 
 // Defines for the GPS module
-#define BAUD_RATE 9600
 
 // Global constants
 unsigned long period;	// Period of PWM output.
@@ -32,6 +31,8 @@ unsigned long period;	// Period of PWM output.
 //*****************************************************************************
 // Initialization functions
 //*****************************************************************************
+
+/* Clears all the peripheral used */
 void reset_peripheral(void){
 	SysCtlPeripheralReset (SYSCTL_PERIPH_PWM);
 	SysCtlPeripheralReset(SYSCTL_PERIPH_GPIOG);
@@ -44,6 +45,7 @@ void reset_peripheral(void){
 	SysCtlPeripheralReset(SYSCTL_PERIPH_TIMER1);
 }
 
+/* Sets up the proccesor speed */
 void initClock (void) {
 	/* Set the clocking to run from the PLL at 50 MHz.  Assumes 8MHz XTAL,
 	whereas some older eval boards used 6MHz. */
@@ -92,12 +94,12 @@ void initPin (void) {
 }
 
 
-// intialise the OLED display
+/* Init the OLED display */
 void initDisplay (void) {
 	RIT128x96x4Init(1000000);
 }
 
-// Initlise the PWM for pin PWM4. This sets up the period and frequecy also.
+/* Initlise the PWM for pin PWM4. This sets up the period and frequecy also */
 void initPWMchan(void) {
 	period = SysCtlClockGet () / PWM_DIVIDER / PWM4_RATE_HZ;
 
@@ -158,12 +160,12 @@ void initConsole (void) {
 	GPIOPinTypeUART(GPIO_PORTD_BASE, GPIO_PIN_2 | GPIO_PIN_3);//extra
 	//
 	UARTConfigSetExpClk(UART0_BASE, SysCtlClockGet(),
-			BAUD_RATE, (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE |
+			BAUD_RATE_GPS, (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE |
 			UART_CONFIG_PAR_NONE));//normal
 
 	UARTConfigSetExpClk(UART1_BASE, SysCtlClockGet(),
-				BAUD_RATE, (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE |
-				UART_CONFIG_PAR_NONE));//extra
+				BAUD_RATE_GPS, (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE |
+				UART_CONFIG_PAR_NONE));//extra for fake gps
 
     IntPrioritySet( INT_UART0, configKERNEL_INTERRUPT_PRIORITY);
     //
@@ -171,10 +173,7 @@ void initConsole (void) {
     //
     IntEnable(INT_UART0);
     UARTIntEnable(UART0_BASE, UART_INT_RX | UART_INT_RT);
-
-    //IntEnable(INT_UART1);
-    //UARTIntEnable(UART1_BASE, UART_INT_RX | UART_INT_RT);
-
+    
 	//
 	UARTFIFOEnable(UART1_BASE);
 	UARTEnable(UART1_BASE);
@@ -182,15 +181,15 @@ void initConsole (void) {
 
 /* Runs main init for program */
 void main_init(void){
-    IntMasterDisable();
-    reset_peripheral();
-    initClock();
-    initPin();
-    initGPIO();
-    initConsole();
-    initPWMchan();
-    initDisplay();                  // intialise the OLED display
-    send_data();send_data();send_data();
+    IntMasterDisable(); // Disable interupts while init is happing
+    reset_peripheral(); // Reset all peripheral
+    initClock();        // Enable clock
+    initPin();          // Enable pin change interupt for encoder
+    initGPIO();         // Enable button and motor direction GPIO
+    initConsole();      // Enable UART0 for GPS data
+    initPWMchan();      // Enable PWM for motor control
+    initDisplay();      // Enable the OLED display
+    send_data();send_data();send_data(); // Send data to GPS three time to make sure it gets it
 }
 
 // *******************************************************
