@@ -1,5 +1,5 @@
 /*
- * PWM_module.h
+ * PWM_module.c
  *
  *  Created on: 13/07/2016
  *      Author: Ryan Taylor
@@ -17,6 +17,7 @@
 #include "driverlib/pwm.h"
 #include "driverlib/gpio.h"
 #include "init.h"
+#include "PWM_module.h"
 
 /* Macro for chaging pin state */
 #define GPIOHigh(x) GPIOPinWrite(GPIO_PORTF_BASE, x, x)
@@ -56,7 +57,7 @@ PWM_DATA_s speed_feedback(PWM_speed_DATA_s PWM_speed_DATA, encoder_s encoder_1, 
 
 	signed int check = PWM_DATA.duty;
 
-	if (check < PWM_MIN_DUTY && check > -PWM_MIN_DUTY){
+	if ((check < PWM_MIN_DUTY && check > -PWM_MIN_DUTY) || PWM_speed_DATA.is_speed_set == 0){
 		PWM_DATA.duty = 0;
 		PWM_DATA.direction = 0;
 	}

@@ -5,6 +5,7 @@
  *      Author: Ryan Taylor
  */
 
+#include "UART_module.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

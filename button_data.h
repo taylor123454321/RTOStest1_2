@@ -14,7 +14,6 @@
 #include "init.h"
 #include "inc/hw_memmap.h"
 
-<<<<<<< HEAD
 /* Reads GPIO pins connected to buttons */
 button_data_raw_s read_buttons(void);
 
@@ -23,15 +22,6 @@ bool invert_bool(bool button);
 
 /* Inverts all the button data */
 button_data_s invert_buttons(button_data_raw_s raw_button_data);
-=======
-/* Read GPIO pins for buttons */
-button_data_raw_s read_buttons(void);
 
-/* Invert bool for button value inverting */
-bool invert_bool(bool button);
-
-/* Invert all buttons using inver_bool() */
-button_data_s invert_button(button_data_raw_s raw_button_data);
->>>>>>> origin/master
 
 #endif /* BUTTON_DATA_H_ */

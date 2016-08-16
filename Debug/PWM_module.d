@@ -15,6 +15,7 @@ PWM_module.obj: C:/ti/StellarisWare/driverlib/pwm.h
 PWM_module.obj: C:/ti/StellarisWare/driverlib/gpio.h
 PWM_module.obj: C:/ti/StellarisWare/driverlib/pin_map.h
 PWM_module.obj: ../init.h
+PWM_module.obj: ../PWM_module.h
 
 ../PWM_module.c: 
 C:/ti/ccsv6/tools/compiler/ti-cgt-arm_16.6.0.STS/include/stdio.h: 
@@ -31,3 +32,4 @@ C:/ti/StellarisWare/driverlib/pwm.h:
 C:/ti/StellarisWare/driverlib/gpio.h: 
 C:/ti/StellarisWare/driverlib/pin_map.h: 
 ../init.h: 
+../PWM_module.h: 

@@ -231,10 +231,11 @@ void vDisplayTask( void *pvParameters ){
 		xQueuePeek(xEncoder_1, &encoder_1, 0);
 		xQueueReceive(xPWM_DATA, &PWM_DATA, 0);
 
-		set_speed = read_button_screen(button_data,set_speed, 1);         // Read buttons for selecting screen/state of program
+		set_speed = read_button_screen(button_data, set_speed, 1);         // Read buttons for selecting screen/state of program
 		set_speed = set_speed_func(set_speed, button_data, buffed_speed); // Seting the speed you want to cruise at
 		PWM_speed_DATA.set_speed = set_speed.set_speed_value;             // Transfering data for PWM control
 		PWM_speed_DATA.speed = GPS_DATA_DECODED.speed_s;
+		//PWM_speed_DATA.is_speed_set = set_speed.is_speed_set;
 
 		xQueueSendToBack(xPWM_speed_DATA, &PWM_speed_DATA, 0);            // Sending that data in queue
 

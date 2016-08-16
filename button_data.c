@@ -5,23 +5,14 @@
  *      Author: Ryan Taylor
  */
 
-<<<<<<< HEAD
 #include "button_data.h"
-=======
-#include <RTOStest1/button_data.h
->>>>>>> origin/master
 #include <stdint.h>
 #include <stdbool.h>
 #include "init.h"
 #include "driverlib/gpio.h"
 #include "inc/hw_memmap.h"
 
-<<<<<<< HEAD
-
 /* Reads GPIO pins connected to buttons */
-=======
-/* Read GPIO pins for buttons */
->>>>>>> origin/master
 button_data_raw_s read_buttons(void){
 	button_data_raw_s raw_button_data;
 	raw_button_data.up = (GPIOPinRead (GPIO_PORTG_BASE, GPIO_PIN_3) == GPIO_PIN_3);
@@ -32,11 +23,7 @@ button_data_raw_s read_buttons(void){
 	return raw_button_data;
 }
 
-<<<<<<< HEAD
-/* Inverts the button data so that 1 is pressed and 0 is not presed */
-=======
 /* Invert bool for button value inverting */
->>>>>>> origin/master
 bool invert_bool(bool button){
 	if (button == 0){
 			button = 1;
@@ -47,13 +34,8 @@ bool invert_bool(bool button){
 	return button;
 }
 
-<<<<<<< HEAD
 /* Inverts all the button data */
 button_data_s invert_buttons(button_data_raw_s raw_button_data){
-=======
-/* Invert all buttons using inver_bool() */
-button_data_s invert_button(button_data_raw_s raw_button_data){
->>>>>>> origin/master
 	button_data_s button_data;
 	button_data.down = invert_bool(raw_button_data.down);
 	button_data.left = invert_bool(raw_button_data.left);

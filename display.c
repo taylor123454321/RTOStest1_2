@@ -27,6 +27,9 @@ set_speed_s read_button_screen(button_data_s button_data, set_speed_s set_speed,
 	else {
 		if (button_data.select == 1 || (fix == 1 && screen == 4)){// back function
 			screen = 0;
+			/*if (button_data.select == 1 && set_speed.is_speed_set == 1){
+				set_speed.is_speed_set = 0;
+			}*/
 		}
 		if (button_data.left == 1 && screen == 0){ //acceleration
 			screen = 2;
@@ -82,7 +85,7 @@ void no_fix_screen(clock time, uint8_t satellite, int encoder, int aim_pos, PWM_
 }
 
 /* Main display function */
-void display(int screen, float acc, float max_acc, int speed_set, GPS_DATA_DECODED_s DATA, float buffed_speed_,
+void display(int screen, float acc, float max_acc, int speed_set, GPS_DATA_DECODED_s DATA, float buffed_speed,
 		unsigned long encoder, float distance, char * stuff, int aim_pos, unsigned long adc, PWM_DATA_s PWM_DATA){
 	if (screen == 1){
 		set_speed_display(speed_set);
@@ -92,12 +95,12 @@ void display(int screen, float acc, float max_acc, int speed_set, GPS_DATA_DECOD
 	}
 	else {
 		char stringA[30];char stringB[30];char stringC[30];char stringD[30];char stringE[30];char stringG[30];
-		sprintf(stringA, "Speed %.1f  %d.%d.%d  ", buffed_speed_, DATA.real_time_s.hour, DATA.real_time_s.minute, DATA.real_time_s.seconds);
+		sprintf(stringA, "Speed %.1f  %d.%d.%d  ", buffed_speed, DATA.real_time_s.hour, DATA.real_time_s.minute, DATA.real_time_s.seconds);
 		sprintf(stringB, "Acc %.1f Max %.1f   ", acc, max_acc);
 		sprintf(stringC, "Set speed %d    ", speed_set);
 		sprintf(stringD, "Satellites %d   ", DATA.satellites_s);
 		sprintf(stringE, "PWM = %d, dir = %d ", PWM_DATA.duty, PWM_DATA.direction);
-		sprintf(stringG, "Int %d Enc %d   ", adc, encoder);
+		sprintf(stringG, "Enc %d       ", encoder);
 		//sprintf(stringF, "  ");
 		//sprintf(stringG, "Distance  %.2f   ", distance);
 		RIT128x96x4StringDraw (stringA, 6, 12, 15);

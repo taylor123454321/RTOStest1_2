@@ -5,27 +5,28 @@
  *      Author: Ryan Taylor
  */
 
+#include "speed.h"
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
-#include "speed.h"
 #include "display.h"
-#include "driverlib/uart.h"
-#include "inc/hw_uart.h"
+#include "inc/hw_types.h"
 #include "inc/hw_memmap.h"
 #include "data_process.h"
 #include "button_data.h"
 #include "init.h"
+#include "inc/hw_uart.h"
+#include "driverlib/uart.h"
+
 
 /* This function sets the speed for the car to stay at and make sure its with in the min and max bounds */
 set_speed_s set_speed_func(set_speed_s set_speed, button_data_s button_data, float speed){
-	if (set_speed.is_speed_set == 1){
+	/*if (set_speed.is_speed_set == 1){
 		set_speed.set_speed_value = speed;
-		set_speed.is_speed_set = 0;
-	}
-	else {
+	}*/
+
 		if (button_data.up == 1){
 			if (set_speed.set_speed_value >= MAX_SET_SPEED){      // Greater than 130 is capped
 				set_speed.set_speed_value = MAX_SET_SPEED;
@@ -47,7 +48,7 @@ set_speed_s set_speed_func(set_speed_s set_speed, button_data_s button_data, flo
 			else {
 				set_speed.set_speed_value --;
 			}
-		}
+
 	}
 	return set_speed;
 }

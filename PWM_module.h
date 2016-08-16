@@ -12,7 +12,7 @@
 #include "init.h"
 
 /* DEFINES */
-#define PWM_MIN_DUTY 14
+#define PWM_MIN_DUTY 3
 
 
 /* Based on PWM duty this function picks the direction of the motor */

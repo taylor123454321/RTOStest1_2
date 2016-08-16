@@ -15,7 +15,7 @@
 // Contstants
 // *******************************************************
 
-#define PWM4_RATE_HZ 150
+#define PWM4_RATE_HZ 5000
 #define PWM_DIV_CODE SYSCTL_PWMDIV_4
 #define PWM_DIVIDER 4
 #define PWM4_DEF_DUTY 50
@@ -137,6 +137,7 @@ typedef struct{
 /* speed and set speed */
 typedef struct{
 	float speed;
+	bool is_speed_set;
 	int set_speed;
 } PWM_speed_DATA_s;
 
