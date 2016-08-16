@@ -1,18 +1,18 @@
 /*
- * debounce.c
+ * button_data.c
  *
  *  Created on: 29/08/2015
  *      Author: Ryan Taylor
  */
 
-#include <RTOStest1/button_data.h>
+#include <RTOStest1/button_data.h
 #include <stdint.h>
 #include <stdbool.h>
 #include "init.h"
 #include "driverlib/gpio.h"
 #include "inc\hw_memmap.h"
 
-
+/* Read GPIO pins for buttons */
 button_data_raw_s read_buttons(void){
 	button_data_raw_s raw_button_data;
 	raw_button_data.up = (GPIOPinRead (GPIO_PORTG_BASE, GPIO_PIN_3) == GPIO_PIN_3);
@@ -23,6 +23,7 @@ button_data_raw_s read_buttons(void){
 	return raw_button_data;
 }
 
+/* Invert bool for button value inverting */
 bool invert_bool(bool button){
 	if (button == 0){
 			button = 1;
@@ -33,7 +34,7 @@ bool invert_bool(bool button){
 	return button;
 }
 
-
+/* Invert all buttons using inver_bool() */
 button_data_s invert_button(button_data_raw_s raw_button_data){
 	button_data_s button_data;
 	button_data.down = invert_bool(raw_button_data.down);

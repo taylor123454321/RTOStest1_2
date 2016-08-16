@@ -1,5 +1,5 @@
 /*
- *  	Crusie control program
+ *  	Cruise control program
  *  	Created on: May 13, 2015
  *  	Last changed on: Aug 15, 2016
  *      Author: Ryan Taylor
@@ -82,24 +82,25 @@ int main( void ) {
 	vSemaphoreCreateBinary(xBinarySemaphoreEncoder_1);
 
     /* Creates Queues */
-	xQueueGPSDATA = xQueueCreate( 1, sizeof(GPS_DATA_DECODED_s));
-	xQueueButtons = xQueueCreate( 1, sizeof(button_data_s));
-	xQueueSpeed = xQueueCreate( 1, sizeof(float));
+	xQueueGPSDATA     = xQueueCreate( 1, sizeof(GPS_DATA_DECODED_s));
+	xQueueButtons     = xQueueCreate( 1, sizeof(button_data_s));
+	xQueueSpeed       = xQueueCreate( 1, sizeof(float));
 	xQueueBuffedSpeed = xQueueCreate( 1, sizeof(float));
-	xEncoder_1 = xQueueCreate( 1, sizeof(encoder_s));
-	xPWM_DATA = xQueueCreate( 1, sizeof(PWM_DATA_s));
-	xPWM_speed_DATA = xQueueCreate( 1, sizeof(PWM_speed_DATA_s));
+	xEncoder_1        = xQueueCreate( 1, sizeof(encoder_s));
+	xPWM_DATA         = xQueueCreate( 1, sizeof(PWM_DATA_s));
+	xPWM_speed_DATA   = xQueueCreate( 1, sizeof(PWM_speed_DATA_s));
 	xEncoder_raw_DATA = xQueueCreate( 1, sizeof(PWM_DATA_s));
-	xUART_GPS_DATA = xQueueCreate( 1, sizeof(UART_GPS_DATA_s));
+	xUART_GPS_DATA    = xQueueCreate( 1, sizeof(UART_GPS_DATA_s));
 
 	/* Create tasks. */
-	xTaskCreate( vReadGPS, "GPS Read Task", 240, NULL, 4, NULL );
-	xTaskCreate( vDisplayTask, "Display Task", 600, NULL, 1, NULL );
-	xTaskCreate( vReadButtons, "Debounce Buttons Task", 150, NULL, 2, NULL );
-	xTaskCreate( vFilterSpeed, "Filter Speed Task", 100, NULL, 2, NULL );
-	xTaskCreate( vEncoder, "Encoder Task", 100, NULL, 3, NULL );
-	xTaskCreate( vPWM, "PWM Task", 100, NULL, 3, NULL );
-	xTaskCreate( vReadGPSchar, "ReadGPSchar Task", 250, NULL, 4, NULL);
+	xTaskCreate( vReadGPS,     "GPS Read Task",     240, NULL, 4, NULL );
+    xTaskCreate( vReadGPSchar, "ReadGPSchar Task",  250, NULL, 4, NULL);
+	xTaskCreate( vPWM,         "PWM Task",          100, NULL, 3, NULL );
+    xTaskCreate( vEncoder,     "Encoder Task",      100, NULL, 3, NULL );
+    xTaskCreate( vFilterSpeed, "Filter Speed Task", 100, NULL, 2, NULL );
+    xTaskCreate( vReadButtons, "Read Buttons Task", 150, NULL, 2, NULL );
+    xTaskCreate( vDisplayTask, "Display Task",      600, NULL, 1, NULL );
+
 
 	IntMasterEnable();
 
@@ -157,10 +158,10 @@ void vReadButtons(void *pvParameters){
 
 /* Task to run after pin change interupt to decode data for encoder */
 void vEncoder(void *pvParameters){
+    xSemaphoreTake(xBinarySemaphoreEncoder_1, 0);
 	encoder_raw_DATA_s encoder_raw_DATA;
 	encoder_s encoder_1;
 	encoder_1.angle = 0;
-	xSemaphoreTake(xBinarySemaphoreEncoder_1, 0);
 
 	while(1){
 		xQueueReceive(xEncoder_raw_DATA, &encoder_raw_DATA, 0);   // Get pin change data
