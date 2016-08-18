@@ -94,7 +94,7 @@ int main( void ) {
 
 	/* Create tasks. */
 	xTaskCreate( vReadGPS,     "GPS Read Task",     240, NULL, 4, NULL );
-    xTaskCreate( vReadGPSchar, "ReadGPSchar Task",  250, NULL, 4, NULL);
+    xTaskCreate( vReadGPSchar, "ReadGPSchar Task",  200, NULL, 4, NULL);
 	xTaskCreate( vPWM,         "PWM Task",          100, NULL, 3, NULL );
     xTaskCreate( vEncoder,     "Encoder Task",      100, NULL, 3, NULL );
     xTaskCreate( vFilterSpeed, "Filter Speed Task", 100, NULL, 2, NULL );
@@ -103,8 +103,6 @@ int main( void ) {
 
 
 	IntMasterEnable();
-
-	/* Start the scheduler so our tasks start executing. */
 	vTaskStartScheduler();	
 	while(1);
 }
@@ -116,6 +114,7 @@ void vReadGPSchar(void *pvParameters){
 	xSemaphoreTake(xBinarySemaphoreGPSchar, 0);
 
     while(1) { // Loop while there are characters in the receive FIFO.
+
 		while(UARTCharsAvail(UART0_BASE)) {
 			long UART_char = UARTCharGetNonBlocking(UART0_BASE);
 			strcpy(UART_char_data_old, store_char(UART_char, UART_char_data_old));
