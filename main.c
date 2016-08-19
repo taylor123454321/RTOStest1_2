@@ -51,10 +51,10 @@ void vEncoder( void *pvParameters );
 void vPWM( void *pvParameters );
 void vReadGPSchar( void *pvParameters );
 
-//Global variables
+/* Global variable */
 char UART_char_data_old[120];
 
-// RTOS semaphore handles
+/* RTOS semaphore handles */
 xSemaphoreHandle  xBinarySemaphoreGPS;
 xSemaphoreHandle  xBinarySemaphoreGPSchar;
 xSemaphoreHandle  xBinarySemaphoreFilter;
@@ -113,14 +113,13 @@ int main( void ) {
 void vReadGPSchar(void *pvParameters){
 	xSemaphoreTake(xBinarySemaphoreGPSchar, 0);
 
-    while(1) { // Loop while there are characters in the receive FIFO.
-
+    while(1) {                                                  // Loop while there are characters in the receive FIFO.
 		while(UARTCharsAvail(UART0_BASE)) {
 			long UART_char = UARTCharGetNonBlocking(UART0_BASE);
 			strcpy(UART_char_data_old, store_char(UART_char, UART_char_data_old));
 
 		}
-		xSemaphoreTake(xBinarySemaphoreGPSchar, portMAX_DELAY);                  // Take original semaphore
+		xSemaphoreTake(xBinarySemaphoreGPSchar, portMAX_DELAY);              // Take original semaphore
 	}
 }
 
@@ -128,10 +127,8 @@ void vReadGPSchar(void *pvParameters){
 void vReadGPS(void *pvParameters){
 	xSemaphoreTake(xBinarySemaphoreGPS, 0);
 	GPS_DATA_DECODED_s GPS_DATA_DECODED;                                     // All data from GPS
-	//UART_GPS_DATA_s UART_DATA;
 
 	while(1) {
-		//xQueueReceive(xUART_GPS_DATA, &UART_DATA, 0);
 		GPS_DATA_DECODED = split_data(UART_char_data_old, GPS_DATA_DECODED); // Decode NEMA sentence
 		xQueueSendToBack(xQueueGPSDATA, &GPS_DATA_DECODED, 0);               // Store data in Queue
 
@@ -139,6 +136,39 @@ void vReadGPS(void *pvParameters){
 		xQueueSendToBack(xQueueSpeed, &GPS_DATA_DECODED.speed_s, 0);         // Send speed to filter task
 		xSemaphoreTake(xBinarySemaphoreGPS, portMAX_DELAY);                  // Take original semaphore
 	}
+}
+
+/* Task to filter speed in circular buffer */
+void vFilterSpeed( void *pvParameters ){
+    circBuf_t speed_buffer;
+    initCircBuf (&speed_buffer, BUF_SIZE);                        // Init buffer
+    xSemaphoreTake(xBinarySemaphoreFilter, 0);                    // Take inital semaphore
+    float speed_to_store = 0;
+    float buffed_speed = 0;
+    
+    while(1){
+        xQueueReceive(xQueueSpeed, &speed_to_store, 0);           // Receive speed from queue
+        speed_buffer = store_speed(speed_to_store, speed_buffer); // Put new value in buffer
+        buffed_speed = analysis_speed(speed_buffer);              // Average buffer
+        xQueueSendToBack(xQueueBuffedSpeed, &buffed_speed, 0);    // Store value in Queue
+        xSemaphoreTake(xBinarySemaphoreFilter, portMAX_DELAY);
+    }
+}
+
+/* Task to run after pin change interupt to decode data for encoder */
+void vEncoder(void *pvParameters){
+    xSemaphoreTake(xBinarySemaphoreEncoder_1, 0);
+    encoder_raw_DATA_s encoder_raw_DATA;
+    encoder_s encoder_1;
+    encoder_1.angle = 0;
+    
+    while(1){
+        xQueueReceive(xEncoder_raw_DATA, &encoder_raw_DATA, 0);   // Get pin change data
+        encoder_1 = encoder_quad(encoder_1, encoder_raw_DATA);    // Decode pin change and update encoder position
+        
+        xQueueSendToBack(xEncoder_1, &encoder_1, 0);              // Store button data
+        xSemaphoreTake(xBinarySemaphoreEncoder_1, portMAX_DELAY); // Take orginial semaphore
+    }
 }
 
 /* Task to read buttons and store data */
@@ -152,22 +182,6 @@ void vReadButtons(void *pvParameters){
 		xQueueSendToBack(xQueueButtons, &button_data, 0); // Store button data
 
 		vTaskDelay(14 / portTICK_RATE_MS);                // Set Read button task to run at 75Hz
-	}
-}
-
-/* Task to run after pin change interupt to decode data for encoder */
-void vEncoder(void *pvParameters){
-    xSemaphoreTake(xBinarySemaphoreEncoder_1, 0);
-	encoder_raw_DATA_s encoder_raw_DATA;
-	encoder_s encoder_1;
-	encoder_1.angle = 0;
-
-	while(1){
-		xQueueReceive(xEncoder_raw_DATA, &encoder_raw_DATA, 0);   // Get pin change data
-		encoder_1 = encoder_quad(encoder_1, encoder_raw_DATA);    // Decode pin change and update encoder position
-
-		xQueueSendToBack(xEncoder_1, &encoder_1, 0);              // Store button data
-		xSemaphoreTake(xBinarySemaphoreEncoder_1, portMAX_DELAY); // Take orginial semaphore
 	}
 }
 
@@ -190,23 +204,6 @@ void vPWM(void *pvParameters){
 		PWM_duty(PWM_DATA, period);
 		xQueueSendToBack(xPWM_DATA, &PWM_DATA, 0);                      // Store data in queue for display
 		vTaskDelay(33 / portTICK_RATE_MS);                              // Set PWM task to run at 30Hz
-	}
-}
-
-/* Task to filter speed in circular buffer */
-void vFilterSpeed( void *pvParameters ){
-	circBuf_t speed_buffer;
-	initCircBuf (&speed_buffer, BUF_SIZE);                        // Init buffer
-	xSemaphoreTake(xBinarySemaphoreFilter, 0);                    // Take inital semaphore
-	float speed_to_store = 0;
-	float buffed_speed = 0;
-
-	while(1){
-		xQueueReceive(xQueueSpeed, &speed_to_store, 0);           // Receive speed from queue
-		speed_buffer = store_speed(speed_to_store, speed_buffer); // Put new value in buffer
-		buffed_speed = analysis_speed(speed_buffer);              // Average buffer
-		xQueueSendToBack(xQueueBuffedSpeed, &buffed_speed, 0);    // Store value in Queue
-		xSemaphoreTake(xBinarySemaphoreFilter, portMAX_DELAY);
 	}
 }
 
@@ -234,7 +231,6 @@ void vDisplayTask( void *pvParameters ){
 		set_speed = set_speed_func(set_speed, button_data, buffed_speed); // Seting the speed you want to cruise at
 		PWM_speed_DATA.set_speed = set_speed.set_speed_value;             // Transfering data for PWM control
 		PWM_speed_DATA.speed = GPS_DATA_DECODED.speed_s;
-		//PWM_speed_DATA.is_speed_set = set_speed.is_speed_set;
 
 		xQueueSendToBack(xPWM_speed_DATA, &PWM_speed_DATA, 0);            // Sending that data in queue
 
